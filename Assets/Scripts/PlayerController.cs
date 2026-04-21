@@ -155,7 +155,11 @@ public class PlayerController : MonoBehaviour
 
         rb.AddForce(velocityChange * acceleration, ForceMode.Acceleration);
     }
+    [Header("Idle Bob")]
+    public float idleBobAmplitude = 0.05f;
+    public float idleBobSpeed = 1.5f;
 
+    private float idleTimer;
     void HandleFOV()
     {
         if (vcam == null) return;
@@ -178,22 +182,32 @@ public class PlayerController : MonoBehaviour
         vcam.m_Lens.FieldOfView = Mathf.Lerp(currentFOV, targetFOV, Time.deltaTime * fovSmoothSpeed);
     }
 
-    void HandleCameraNoise()
+   void HandleCameraNoise()
+{
+    if (noise == null) return;
+
+    float speed = new Vector3(rb.velocity.x, 0, rb.velocity.z).magnitude;
+
+    float target = 0f;
+
+    // Movement bob (existing)
+    if (speed > 0.1f)
     {
-        if (noise == null) return;
-
-        float speed = new Vector3(rb.velocity.x, 0, rb.velocity.z).magnitude;
-
-        float target = 0f;
-
-        if (speed > 0.1f)
-        {
-            if (Input.GetKey(KeyCode.LeftShift))
-                target = 1.2f;
-            else
-                target = 0.6f;
-        }
+        if (Input.GetKey(KeyCode.LeftShift))
+            target = 1.2f;
+        else
+            target = 0.6f;
 
         noise.m_AmplitudeGain = Mathf.Lerp(noise.m_AmplitudeGain, target, Time.deltaTime * 5f);
     }
+    else
+    {
+        // Idle bob (NEW)
+        idleTimer += Time.deltaTime * idleBobSpeed;
+
+        float idleOffset = Mathf.Sin(idleTimer) * idleBobAmplitude;
+
+        noise.m_AmplitudeGain = Mathf.Lerp(noise.m_AmplitudeGain, idleOffset, Time.deltaTime * 2f);
+    }
+}
 }
