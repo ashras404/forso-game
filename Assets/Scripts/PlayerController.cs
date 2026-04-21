@@ -22,7 +22,18 @@ public class PlayerController : MonoBehaviour
     public float normalFOV = 75f;
     public float sprintFOV = 90f;
     public float fovSmoothSpeed = 8f;
+
+    [Header("Dash")]
+    public float dashForce = 20f;
+    public float dashDuration = 0.15f;
+    public float dashCooldown = 1f;
+
+    private bool isDashing = false;
+    private float dashTimer;
+    private float dashCooldownTimer;
     private Rigidbody rb;
+
+
 
     void Start()
     {
@@ -43,11 +54,19 @@ public class PlayerController : MonoBehaviour
         HandleCameraNoise();
         AlignPlayerToCamera();
         HandleFOV();
+        HandleDashInput();
     }
 
     void FixedUpdate()
     {
-        HandleMovement();
+        if (isDashing)
+        {
+            HandleDash();
+        }
+        else
+        {
+            HandleMovement();
+        }
     }
 
     void AlignPlayerToCamera()
@@ -58,6 +77,56 @@ public class PlayerController : MonoBehaviour
         if (forward.sqrMagnitude > 0.01f)
         {
             transform.forward = forward;
+        }
+    }
+
+    void HandleDashInput()
+    {
+        if (dashCooldownTimer > 0f)
+            dashCooldownTimer -= Time.deltaTime;
+
+        if (Input.GetKeyDown(KeyCode.Space) && dashCooldownTimer <= 0f)
+        {
+            StartDash();
+        }
+    }
+
+    void StartDash()
+    {
+        isDashing = true;
+        dashTimer = dashDuration;
+        dashCooldownTimer = dashCooldown;
+    }
+
+    void HandleDash()
+    {
+        dashTimer -= Time.fixedDeltaTime;
+
+        // Get movement direction
+        float x = Input.GetAxis("Horizontal");
+        float z = Input.GetAxis("Vertical");
+
+        Vector3 camForward = Camera.main.transform.forward;
+        camForward.y = 0f;
+        camForward.Normalize();
+
+        Vector3 camRight = Camera.main.transform.right;
+        camRight.y = 0f;
+        camRight.Normalize();
+
+        Vector3 dashDir = camForward * z + camRight * x;
+
+        // If no input → dash forward
+        if (dashDir.magnitude < 0.1f)
+            dashDir = camForward;
+
+        dashDir.Normalize();
+
+        rb.velocity = dashDir * dashForce;
+
+        if (dashTimer <= 0f)
+        {
+            isDashing = false;
         }
     }
 
