@@ -31,6 +31,15 @@ public class PlayerController : MonoBehaviour
     private bool isDashing = false;
     private float dashTimer;
     private float dashCooldownTimer;
+
+    [Header("Footsteps")]
+    public AudioClip[] footstepClips;
+    public float stepInterval = 0.5f;
+
+    private float stepTimer;
+
+    [Header("Dash Audio")]
+    public AudioClip dashSound;
     private Rigidbody rb;
 
 
@@ -55,6 +64,7 @@ public class PlayerController : MonoBehaviour
         AlignPlayerToCamera();
         HandleFOV();
         HandleDashInput();
+        HandleFootsteps();
     }
 
     void FixedUpdate()
@@ -96,6 +106,8 @@ public class PlayerController : MonoBehaviour
         isDashing = true;
         dashTimer = dashDuration;
         dashCooldownTimer = dashCooldown;
+        if (dashSound != null)
+        AudioManager.Instance.PlaySFX(dashSound, 0.8f);
     }
 
     void HandleDash()
@@ -182,32 +194,72 @@ public class PlayerController : MonoBehaviour
         vcam.m_Lens.FieldOfView = Mathf.Lerp(currentFOV, targetFOV, Time.deltaTime * fovSmoothSpeed);
     }
 
-   void HandleCameraNoise()
+    void HandleCameraNoise()
+    {
+        if (noise == null) return;
+
+        float speed = new Vector3(rb.velocity.x, 0, rb.velocity.z).magnitude;
+
+        float target = 0f;
+
+        // Movement bob (existing)
+        if (speed > 0.1f)
+        {
+            if (Input.GetKey(KeyCode.LeftShift))
+                target = 1.2f;
+            else
+                target = 0.6f;
+
+            noise.m_AmplitudeGain = Mathf.Lerp(noise.m_AmplitudeGain, target, Time.deltaTime * 5f);
+        }
+        else
+        {
+            // Idle bob (NEW)
+            idleTimer += Time.deltaTime * idleBobSpeed;
+
+            float idleOffset = Mathf.Sin(idleTimer) * idleBobAmplitude;
+
+            noise.m_AmplitudeGain = Mathf.Lerp(noise.m_AmplitudeGain, idleOffset, Time.deltaTime * 2f);
+        }
+    }
+    void HandleFootsteps()
 {
-    if (noise == null) return;
+    if (isDashing) return; 
 
     float speed = new Vector3(rb.velocity.x, 0, rb.velocity.z).magnitude;
 
-    float target = 0f;
-
-    // Movement bob (existing)
     if (speed > 0.1f)
     {
-        if (Input.GetKey(KeyCode.LeftShift))
-            target = 1.2f;
-        else
-            target = 0.6f;
+        stepTimer -= Time.deltaTime;
 
-        noise.m_AmplitudeGain = Mathf.Lerp(noise.m_AmplitudeGain, target, Time.deltaTime * 5f);
+        if (stepTimer <= 0f)
+        {
+            PlayFootstep();
+
+            if (Input.GetKey(KeyCode.LeftShift))
+                stepTimer = stepInterval * 0.6f;
+            else
+                stepTimer = stepInterval;
+        }
     }
     else
     {
-        // Idle bob (NEW)
-        idleTimer += Time.deltaTime * idleBobSpeed;
-
-        float idleOffset = Mathf.Sin(idleTimer) * idleBobAmplitude;
-
-        noise.m_AmplitudeGain = Mathf.Lerp(noise.m_AmplitudeGain, idleOffset, Time.deltaTime * 2f);
+        stepTimer = 0f;
     }
 }
+
+    void PlayFootstep()
+    {
+        if (footstepClips.Length == 0) return;
+
+        int index = Random.Range(0, footstepClips.Length);
+
+        float originalPitch = AudioManager.Instance.sfxSource.pitch;
+
+        AudioManager.Instance.sfxSource.pitch = Random.Range(0.9f, 1.1f);
+
+        AudioManager.Instance.PlaySFX(footstepClips[index], 0.7f);
+
+        AudioManager.Instance.sfxSource.pitch = originalPitch;
+    }
 }

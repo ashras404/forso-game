@@ -7,7 +7,7 @@ public class MenuCameraMotion : MonoBehaviour
     public float moveAmount = 0.1f;     // position offset
     public float rotationAmount = 2f;   // tilt amount
     public float smoothSpeed = 5f;
-    
+
 
     private Vector3 startPos;
     private Quaternion startRot;
