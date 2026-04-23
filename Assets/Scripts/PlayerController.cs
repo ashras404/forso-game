@@ -83,9 +83,14 @@ public class PlayerController : MonoBehaviour
     {
         float x = Input.GetAxis("Horizontal");
         float z = Input.GetAxis("Vertical");
-        float speed = Input.GetKey(KeyCode.LeftShift) ? sprintSpeed : walkSpeed;
 
-        // Calculate movement relative to camera
+        // Prevent division by zero errors
+        float currentTimeScale = Time.timeScale > 0f ? Time.timeScale : 1f;
+
+        // Compensate for slow motion
+        float speed = (Input.GetKey(KeyCode.LeftShift) ? sprintSpeed : walkSpeed) / currentTimeScale;
+        float currentAccel = acceleration / currentTimeScale;
+
         Vector3 camForward = mainCamera.transform.forward;
         camForward.y = 0f;
         camForward.Normalize();
@@ -98,15 +103,13 @@ public class PlayerController : MonoBehaviour
         Vector3 targetVelocity = moveDir * speed;
         Vector3 currentVelocity = rb.velocity;
 
-        // Apply acceleration force
         Vector3 velocityChange = targetVelocity - new Vector3(currentVelocity.x, 0f, currentVelocity.z);
-        rb.AddForce(velocityChange * acceleration, ForceMode.Acceleration);
+        rb.AddForce(velocityChange * currentAccel, ForceMode.Acceleration);
     }
-
     void HandleDashInput()
     {
         if (dashCooldownTimer > 0f)
-            dashCooldownTimer -= Time.deltaTime;
+            dashCooldownTimer -= Time.unscaledDeltaTime;
 
         if (Input.GetKeyDown(KeyCode.Space) && dashCooldownTimer <= 0f)
         {
@@ -126,10 +129,12 @@ public class PlayerController : MonoBehaviour
 
     void HandleDash()
     {
-        dashTimer -= Time.fixedDeltaTime;
+        // Use unscaled delta time so your dash isn't extended in slow motion
+        dashTimer -= Time.unscaledDeltaTime;
 
         float x = Input.GetAxis("Horizontal");
         float z = Input.GetAxis("Vertical");
+        float currentTimeScale = Time.timeScale > 0f ? Time.timeScale : 1f;
 
         Vector3 camForward = mainCamera.transform.forward;
         camForward.y = 0f;
@@ -141,12 +146,13 @@ public class PlayerController : MonoBehaviour
 
         Vector3 dashDir = camForward * z + camRight * x;
 
-        // Default to forward if no input is pressed
         if (dashDir.magnitude < 0.1f)
             dashDir = camForward;
 
         dashDir.Normalize();
-        rb.velocity = dashDir * dashForce;
+
+        // Compensate dash force for slow motion
+        rb.velocity = dashDir * (dashForce / currentTimeScale);
 
         if (dashTimer <= 0f)
         {
