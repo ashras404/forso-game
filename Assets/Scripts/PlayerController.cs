@@ -84,12 +84,14 @@ public class PlayerController : MonoBehaviour
         float x = Input.GetAxis("Horizontal");
         float z = Input.GetAxis("Vertical");
 
-        // Prevent division by zero errors
         float currentTimeScale = Time.timeScale > 0f ? Time.timeScale : 1f;
 
-        // Compensate for slow motion
+        // Determine if we should use acceleration (moving) or deceleration (stopping)
+        bool isMoving = Mathf.Abs(x) > 0.1f || Mathf.Abs(z) > 0.1f;
+        float activeForce = isMoving ? acceleration : deceleration;
+
         float speed = (Input.GetKey(KeyCode.LeftShift) ? sprintSpeed : walkSpeed) / currentTimeScale;
-        float currentAccel = acceleration / currentTimeScale;
+        float currentForceMultiplier = activeForce / currentTimeScale;
 
         Vector3 camForward = mainCamera.transform.forward;
         camForward.y = 0f;
@@ -104,7 +106,10 @@ public class PlayerController : MonoBehaviour
         Vector3 currentVelocity = rb.velocity;
 
         Vector3 velocityChange = targetVelocity - new Vector3(currentVelocity.x, 0f, currentVelocity.z);
-        rb.AddForce(velocityChange * currentAccel, ForceMode.Acceleration);
+        rb.AddForce(velocityChange * currentForceMultiplier, ForceMode.Acceleration);
+
+        // EXTRA GRAVITY: Keeps player from floating up when moving fast over small bumps
+        rb.AddForce(Vector3.down * (40f / currentTimeScale), ForceMode.Acceleration);
     }
     void HandleDashInput()
     {
@@ -129,7 +134,6 @@ public class PlayerController : MonoBehaviour
 
     void HandleDash()
     {
-        // Use unscaled delta time so your dash isn't extended in slow motion
         dashTimer -= Time.unscaledDeltaTime;
 
         float x = Input.GetAxis("Horizontal");
@@ -151,12 +155,13 @@ public class PlayerController : MonoBehaviour
 
         dashDir.Normalize();
 
-        // Compensate dash force for slow motion
         rb.velocity = dashDir * (dashForce / currentTimeScale);
 
         if (dashTimer <= 0f)
         {
             isDashing = false;
+            // HARD BRAKE: Instantly stop the slide when dash finishes
+            rb.velocity = new Vector3(0f, rb.velocity.y, 0f);
         }
     }
     #endregion

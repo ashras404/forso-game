@@ -1,18 +1,19 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class TimeManager : MonoBehaviour
 {
     [Header("Za Warudo Settings")]
-    public float slowMotionScale = 0.2f; // How slow the world gets (0.2 = 20% speed)
+    public float slowMotionScale = 0.2f; 
     public float maxEnergy = 100f;
-    public float drainRate = 25f; // Drains fully in 4 seconds
+    public float drainRate = 25f; 
     public float regenRate = 15f; 
 
     [Header("UI Reference")]
     public Slider energySlider;
+
+    [Header("Audio")]
+    public AudioClip activationSound;
 
     private float currentEnergy;
     private bool isSlowMoActive = false;
@@ -51,7 +52,6 @@ public class TimeManager : MonoBehaviour
     {
         if (isSlowMoActive)
         {
-            // Use unscaledDeltaTime so the ability drains in real-time, not slow-mo time
             currentEnergy -= drainRate * Time.unscaledDeltaTime;
             
             if (currentEnergy <= 0)
@@ -77,8 +77,13 @@ public class TimeManager : MonoBehaviour
     {
         isSlowMoActive = true;
         Time.timeScale = slowMotionScale;
-        // Adjust fixedDeltaTime so physics stay smooth in slow motion
         Time.fixedDeltaTime = normalFixedDeltaTime * slowMotionScale; 
+
+        // Play the sound using your existing AudioManager
+        if (activationSound != null && AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX(activationSound, 1f);
+        }
     }
 
     void StopSlowMotion()
