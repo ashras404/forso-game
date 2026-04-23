@@ -468,7 +468,7 @@ MonoBehaviour:
   m_LookAt: {fileID: 0}
   m_Follow: {fileID: 360845120}
   m_Lens:
-    FieldOfView: 79.99991
+    FieldOfView: 75.00803
     OrthographicSize: 10
     NearClipPlane: 0.1
     FarClipPlane: 5000
@@ -792,7 +792,7 @@ Camera:
     height: 1
   near clip plane: 0.1
   far clip plane: 5000
-  field of view: 79.99991
+  field of view: 75.00803
   orthographic: 0
   orthographic size: 10
   m_Depth: -1
@@ -1342,7 +1342,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_NoiseProfile: {fileID: 11400000, guid: 554b0ed52734c154eab51f6cedd3a7d7, type: 2}
   m_PivotOffset: {x: 0, y: 0, z: 0}
-  m_AmplitudeGain: -0.2083032
+  m_AmplitudeGain: 0.2185357
   m_FrequencyGain: 1.5
   mNoiseOffsets: {x: 905.7522, y: 348.8092, z: -43.92752}
 --- !u!114 &1804117011
