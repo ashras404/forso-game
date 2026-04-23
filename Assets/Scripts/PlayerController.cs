@@ -78,7 +78,7 @@ public class PlayerController : MonoBehaviour
             HandleMovement();
         }
     }
-
+    //for player camera alignment
     void AlignPlayerToCamera()
     {
         Vector3 forward = Camera.main.transform.forward;
