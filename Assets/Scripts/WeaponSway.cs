@@ -1,18 +1,23 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Cinemachine; // We added this to control the camera zoom!
+using Cinemachine;
 
 public class WeaponSway : MonoBehaviour
 {
     [Header("Aim Down Sights (ADS)")]
-    public Vector3 aimPosition; // Type the numbers you found here!
+    public Vector3 aimPosition; 
     public float aimSpeed = 10f;
     
     [Header("Camera Zoom")]
     public CinemachineVirtualCamera vcam;
     public float normalFOV = 75f;
-    public float aimFOV = 45f; // Zooms in when scoping
+    public float aimFOV = 45f; 
+
+    [Header("Recoil Settings")]
+    public float recoilKickback = 0.2f; // How far the gun pushes toward you
+    public float recoilRotation = 10f;  // How far the barrel kicks up
+    public float recoilRecoverSpeed = 8f; // How fast it settles back
 
     [Header("Mouse Sway Settings")]
     public float swayMultiplier = 2f;
@@ -31,29 +36,40 @@ public class WeaponSway : MonoBehaviour
     private float bobTimer;
     private bool isAiming;
 
+    // Recoil state
+    private float currentRecoilZ;
+    private float currentRecoilRotX;
+
     void Start()
     {
-        // Remember where the gun normally sits
         hipPosition = transform.localPosition;
         startRotation = transform.localRotation;
     }
 
     void Update()
     {
-        // 1 is the Right Mouse Button!
         isAiming = Input.GetMouseButton(1); 
+
+        // Smoothly return recoil values back to 0 over time
+        currentRecoilZ = Mathf.Lerp(currentRecoilZ, 0f, Time.unscaledDeltaTime * recoilRecoverSpeed);
+        currentRecoilRotX = Mathf.Lerp(currentRecoilRotX, 0f, Time.unscaledDeltaTime * recoilRecoverSpeed);
 
         HandlePositionAndBob();
         HandleMouseSway();
         HandleCameraZoom();
     }
 
+    // Called by the Weapon script every time a bullet fires
+    public void TriggerRecoil()
+    {
+        currentRecoilZ -= recoilKickback;
+        currentRecoilRotX -= recoilRotation;
+    }
+
     void HandlePositionAndBob()
     {
-        // 1. Decide where the gun should be (Hip or Centered)
         Vector3 targetPosition = isAiming ? aimPosition : hipPosition;
 
-        // 2. Add movement bob ONLY if we are NOT aiming (keeps the scope steady)
         if (!isAiming)
         {
             float horizontal = Input.GetAxis("Horizontal");
@@ -75,14 +91,15 @@ public class WeaponSway : MonoBehaviour
             }
         }
 
-        // 3. Smoothly move the gun to the final calculated position
+        // Apply the recoil pushback on the Z axis
+        targetPosition.z += currentRecoilZ;
+
         float smoothSpeed = isAiming ? aimSpeed : bobSmoothness;
         transform.localPosition = Vector3.Lerp(transform.localPosition, targetPosition, Time.unscaledDeltaTime * smoothSpeed);
     }
 
     void HandleMouseSway()
     {
-        // Reduce sway by half when aiming for better accuracy
         float currentSwayMultiplier = isAiming ? swayMultiplier / 2f : swayMultiplier;
 
         float mouseX = Input.GetAxisRaw("Mouse X") * currentSwayMultiplier;
@@ -93,7 +110,10 @@ public class WeaponSway : MonoBehaviour
 
         Quaternion rotationX = Quaternion.AngleAxis(-mouseY, Vector3.right);
         Quaternion rotationY = Quaternion.AngleAxis(mouseX, Vector3.up);
-        Quaternion targetRotation = startRotation * rotationX * rotationY;
+        
+        // Add the recoil upward tilt to the target rotation
+        Quaternion recoilRot = Quaternion.Euler(currentRecoilRotX, 0f, 0f);
+        Quaternion targetRotation = startRotation * rotationX * rotationY * recoilRot;
 
         transform.localRotation = Quaternion.Slerp(transform.localRotation, targetRotation, swaySmoothness * Time.unscaledDeltaTime);
     }
@@ -101,7 +121,6 @@ public class WeaponSway : MonoBehaviour
     void HandleCameraZoom()
     {
         if (vcam == null) return;
-
         float targetFOV = isAiming ? aimFOV : normalFOV;
         vcam.m_Lens.FieldOfView = Mathf.Lerp(vcam.m_Lens.FieldOfView, targetFOV, Time.unscaledDeltaTime * aimSpeed);
     }
