@@ -1,5 +1,8 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Rendering.PostProcessing; // We added this!
 
 public class TimeManager : MonoBehaviour
 {
@@ -9,8 +12,10 @@ public class TimeManager : MonoBehaviour
     public float drainRate = 25f; 
     public float regenRate = 15f; 
 
-    [Header("UI Reference")]
+    [Header("UI & Visuals")]
     public Slider energySlider;
+    public PostProcessVolume postProcessingVolume; // Changed from GameObject to Volume
+    public float effectTransitionSpeed = 5f; // How fast the visual effect fades in/out
 
     [Header("Audio")]
     public AudioClip activationSound;
@@ -29,12 +34,30 @@ public class TimeManager : MonoBehaviour
             energySlider.maxValue = maxEnergy;
             energySlider.value = currentEnergy;
         }
+
+        // Ensure weight starts at 0
+        if (postProcessingVolume != null)
+        {
+            postProcessingVolume.weight = 0f;
+        }
     }
 
     void Update()
     {
         HandleInput();
         HandleEnergy();
+        HandleVisualTransition(); // Added this!
+    }
+
+    void HandleVisualTransition()
+    {
+        if (postProcessingVolume == null) return;
+
+        // Target weight is 1 if active, 0 if inactive
+        float targetWeight = isSlowMoActive ? 1f : 0f;
+
+        // Smoothly slide the weight towards the target using unscaled time (so slow-mo doesn't slow down the fade!)
+        postProcessingVolume.weight = Mathf.MoveTowards(postProcessingVolume.weight, targetWeight, effectTransitionSpeed * Time.unscaledDeltaTime);
     }
 
     void HandleInput()
@@ -79,7 +102,6 @@ public class TimeManager : MonoBehaviour
         Time.timeScale = slowMotionScale;
         Time.fixedDeltaTime = normalFixedDeltaTime * slowMotionScale; 
 
-        // Play the sound using your existing AudioManager
         if (activationSound != null && AudioManager.Instance != null)
         {
             AudioManager.Instance.PlaySFX(activationSound, 1f);
