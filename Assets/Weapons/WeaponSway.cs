@@ -6,13 +6,13 @@ using Cinemachine;
 public class WeaponSway : MonoBehaviour
 {
     [Header("Aim Down Sights (ADS)")]
-    public Vector3 aimPosition; 
+    public Vector3 aimPosition;
     public float aimSpeed = 10f;
-    
+
     [Header("Camera Zoom")]
     public CinemachineVirtualCamera vcam;
     public float normalFOV = 75f;
-    public float aimFOV = 45f; 
+    public float aimFOV = 45f;
 
     [Header("Recoil Settings")]
     public float recoilKickback = 0.2f; // How far the gun pushes toward you
@@ -48,7 +48,7 @@ public class WeaponSway : MonoBehaviour
 
     void Update()
     {
-        isAiming = Input.GetMouseButton(1); 
+        isAiming = Input.GetMouseButton(1);
 
         // Smoothly return recoil values back to 0 over time
         currentRecoilZ = Mathf.Lerp(currentRecoilZ, 0f, Time.unscaledDeltaTime * recoilRecoverSpeed);
@@ -62,8 +62,9 @@ public class WeaponSway : MonoBehaviour
     // Called by the Weapon script every time a bullet fires
     public void TriggerRecoil()
     {
-        currentRecoilZ -= recoilKickback;
-        currentRecoilRotX -= recoilRotation;
+        float timeMultiplier = Time.timeScale < 1f ? Time.timeScale : 1f;
+        currentRecoilZ -= recoilKickback * timeMultiplier;
+        currentRecoilRotX -= recoilRotation * timeMultiplier;
     }
 
     void HandlePositionAndBob()
@@ -110,7 +111,7 @@ public class WeaponSway : MonoBehaviour
 
         Quaternion rotationX = Quaternion.AngleAxis(-mouseY, Vector3.right);
         Quaternion rotationY = Quaternion.AngleAxis(mouseX, Vector3.up);
-        
+
         // Add the recoil upward tilt to the target rotation
         Quaternion recoilRot = Quaternion.Euler(currentRecoilRotX, 0f, 0f);
         Quaternion targetRotation = startRotation * rotationX * rotationY * recoilRot;

@@ -9,7 +9,7 @@ public class Weapon : MonoBehaviour
     public GameObject bulletPrefab;
     public Transform firePoint;
     public float bulletForce = 50f;
-    public float fireRate = 0.15f; 
+    public float fireRate = 0.15f;
 
     [Header("Ammo Settings")]
     public int maxAmmo = 30;
@@ -64,7 +64,7 @@ public class Weapon : MonoBehaviour
         // 1. Visuals & Audio
         if (muzzleFlash != null) muzzleFlash.Play();
         if (muzzleLight != null) StartCoroutine(FlashLightRoutine());
-        
+
         if (shootSound != null && AudioManager.Instance != null)
         {
             float originalPitch = AudioManager.Instance.sfxSource.pitch;
@@ -74,7 +74,7 @@ public class Weapon : MonoBehaviour
         }
 
         // --- THE FIX: TRUE AIM MATH ---
-        
+
         // Find the exact center of the screen
         Ray ray = mainCam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
         RaycastHit hit;
@@ -88,23 +88,19 @@ public class Weapon : MonoBehaviour
         }
         else
         {
-            targetPoint = ray.GetPoint(100); 
+            targetPoint = ray.GetPoint(100);
         }
 
         // Calculate the exact direction from the gun barrel to the target point
         Vector3 trueDirection = (targetPoint - firePoint.position).normalized;
 
-        // ------------------------------
-
-        // 2. Spawn bullet and push it in the True Direction!
         GameObject bullet = Instantiate(bulletPrefab, firePoint.position, Quaternion.LookRotation(trueDirection));
-        Rigidbody rb = bullet.GetComponent<Rigidbody>();
-        if (rb != null)
+        Bullet bulletScript = bullet.GetComponent<Bullet>();
+        if (bulletScript != null)
         {
-            rb.AddForce(trueDirection * bulletForce, ForceMode.Impulse);
+            bulletScript.Setup(trueDirection, bulletForce);
         }
-
-        // 3. Recoil & Shake (Visual only now, won't mess up bullets!)
+        
         if (impulseSource != null) impulseSource.GenerateImpulse();
         if (weaponSway != null) weaponSway.TriggerRecoil();
     }
@@ -112,7 +108,7 @@ public class Weapon : MonoBehaviour
     IEnumerator Reload()
     {
         isReloading = true;
-        
+
         if (reloadSound != null && AudioManager.Instance != null)
         {
             AudioManager.Instance.PlaySFX(reloadSound, 1f);
@@ -126,7 +122,7 @@ public class Weapon : MonoBehaviour
     IEnumerator FlashLightRoutine()
     {
         muzzleLight.enabled = true;
-        yield return new WaitForSeconds(0.05f); 
+        yield return new WaitForSeconds(0.05f);
         muzzleLight.enabled = false;
     }
 }
