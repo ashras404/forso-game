@@ -44,9 +44,10 @@ public class PlayerController : MonoBehaviour
     #region Unity Core Methods
     void Start()
     {
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
         rb = GetComponent<Rigidbody>();
-        mainCamera = Camera.main; // Cached for better performance
-
+        mainCamera = Camera.main;
         // Initialize Cinemachine references
         if (virtualCamera != null)
         {

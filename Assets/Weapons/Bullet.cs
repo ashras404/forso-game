@@ -13,13 +13,16 @@ public class Bullet : MonoBehaviour
         // Destroy this object after 'lifeTime' seconds
         Destroy(gameObject, lifeTime);
     }
-
     void OnCollisionEnter(Collision collision)
     {
-        // Here is where we will eventually deal damage to enemies
-        // Example: collision.gameObject.GetComponent<Enemy>().TakeDamage(damage);
+        // Add "InParent" so the bullet checks the parent Hinge for the script!
+        Target target = collision.gameObject.GetComponentInParent<Target>();
 
-        // Destroy the bullet when it hits something
-        //Destroy(gameObject);
+        if (target != null)
+        {
+            target.TakeDamage(damage);
+        }
+
+        Destroy(gameObject);
     }
 }
