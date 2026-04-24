@@ -66,6 +66,11 @@ public class Bullet : MonoBehaviour
         {
             target.TakeDamage(damage);
         }
+        Destructible destructible = collision.gameObject.GetComponent<Destructible>();
+        if (destructible != null)
+        {
+            destructible.Shatter();
+        }
 
         Destroy(gameObject);
     }
