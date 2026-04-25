@@ -49,8 +49,7 @@ public class Weapon : MonoBehaviour
                 return;
             }
         }
-
-        if (Input.GetMouseButton(0) && Time.time >= nextTimeToFire)
+        if (Input.GetMouseButton(0) && Time.time >= nextTimeToFire && !PauseManager.GameIsPaused)
         {
             nextTimeToFire = Time.time + fireRate;
             Shoot();

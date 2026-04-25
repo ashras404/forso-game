@@ -22,6 +22,11 @@ public class EnemyAI : MonoBehaviour
     public float fireRate = 2f; // Shoots every 2 seconds
     private float nextFireTime = 0f;
 
+    [Header("Flying Settings")]
+    public Transform droneModel;
+    public float hoverHeight = 3f; // How high off the ground it should fly
+    public float hoverSpeed = 2f;
+
     [Header("Patrol Settings")]
     public Transform[] waypoints;
     private int currentWaypointIndex = 0;
@@ -68,6 +73,17 @@ public class EnemyAI : MonoBehaviour
             case AIState.Attack:
                 Attack();
                 break;
+        }
+
+        Vector3 currentPos = transform.position;
+
+        // We use a Raycast to find exactly how far the ground is below us
+        RaycastHit hit;
+        if (Physics.Raycast(transform.position, Vector3.down, out hit, 10f))
+        {
+            float bobbing = Mathf.Sin(Time.time * hoverSpeed) * 0.2f;
+            float finalHoverY = hoverHeight + bobbing;
+            droneModel.localPosition = new Vector3(0, finalHoverY, 0);
         }
     }
 

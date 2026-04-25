@@ -8,7 +8,7 @@ public class Bullet : MonoBehaviour
     [Header("Bullet Stats")]
     public float damage = 20f;
     public float crawlSpeed = 2f; // How fast it creeps forward in slow-mo
-    
+
     private Rigidbody rb;
     private Vector3 storedDirection;
     private float storedForce;
@@ -26,7 +26,7 @@ public class Bullet : MonoBehaviour
         {
             isFrozen = true;
             // Set velocity to a slow crawl instead of full force
-            rb.velocity = storedDirection * crawlSpeed; 
+            rb.velocity = storedDirection * crawlSpeed;
         }
         else
         {
@@ -45,32 +45,34 @@ public class Bullet : MonoBehaviour
             if (Time.timeScale >= 1f)
             {
                 isFrozen = false;
-                
+
                 // Stop the crawling speed
-                rb.velocity = Vector3.zero; 
-                
+                rb.velocity = Vector3.zero;
+
                 // BOOM! Blast forward with the original force
                 rb.AddForce(storedDirection * storedForce, ForceMode.Impulse);
 
                 // Start the self-destruct timer now that it's flying
-                Destroy(gameObject, 3f); 
+                Destroy(gameObject, 3f);
             }
         }
     }
 
     void OnCollisionEnter(Collision collision)
     {
+        // --- NEW: Damage the Drone ---
+        EnemyHealth enemy = collision.gameObject.GetComponent<EnemyHealth>();
+        if (enemy != null)
+        {
+            enemy.TakeDamage(damage);
+        }
+
+        // Keep your other collision checks (for the cardboard Targets and Destructibles)
         Target target = collision.gameObject.GetComponentInParent<Target>();
-        
-        if (target != null)
-        {
-            target.TakeDamage(damage);
-        }
+        if (target != null) target.TakeDamage(damage);
+
         Destructible destructible = collision.gameObject.GetComponent<Destructible>();
-        if (destructible != null)
-        {
-            destructible.Shatter();
-        }
+        if (destructible != null) destructible.Shatter();
 
         Destroy(gameObject);
     }
