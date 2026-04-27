@@ -17,6 +17,12 @@ public class PlayerController : MonoBehaviour
     public float dashDuration = 0.15f;
     public float dashCooldown = 1f;
 
+    [Header("Jump Settings")]
+    public float jumpForce = 7f;
+    public LayerMask groundLayer; 
+    public float playerHeight = 2f;
+    private bool isGrounded;
+
     [Header("Camera & FOV Settings")]
     public CinemachineVirtualCamera virtualCamera;
     public float normalFOV = 75f;
@@ -40,6 +46,14 @@ public class PlayerController : MonoBehaviour
     private float dashCooldownTimer;
     private float stepTimer;
     private float idleTimer;
+    public enum MovementType
+    {
+        Jump,
+        Dash
+    }
+    
+    [Header("Developer Settings")] 
+    public MovementType activeAbility = MovementType.Jump; // Defaults to Jump now
 
     #region Unity Core Methods
     void Start()
@@ -48,7 +62,7 @@ public class PlayerController : MonoBehaviour
         Cursor.visible = false;
         rb = GetComponent<Rigidbody>();
         mainCamera = Camera.main;
-        // Initialize Cinemachine references
+        
         if (virtualCamera != null)
         {
             noise = virtualCamera.GetCinemachineComponent<CinemachineBasicMultiChannelPerlin>();
@@ -56,18 +70,66 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    // void Update()
+    // {
+    //     isGrounded = Physics.Raycast(transform.position, Vector3.down, (playerHeight * 0.5f) + 0.2f, groundLayer);
+
+    //     HandleCameraNoise();
+    //     AlignPlayerToCamera();
+    //     HandleFOV();
+    //     HandleFootsteps();
+
+    //     if (dashCooldownTimer > 0f)
+    //         dashCooldownTimer -= Time.unscaledDeltaTime;
+    //     if (Input.GetKeyDown(KeyCode.Space))
+    //     {
+    //         if (activeAbility == MovementType.Jump)
+    //         {
+    //             if (isGrounded)
+    //             {
+    //                 rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
+    //                 rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+    //             }
+    //         }
+    //         else if (activeAbility == MovementType.Dash)
+    //         {
+    //             if (dashCooldownTimer <= 0f)
+    //             {
+    //                 StartDash();
+    //             }
+    //         }
+    //     }
+    // }
     void Update()
     {
+        isGrounded = Physics.Raycast(transform.position, Vector3.down, (playerHeight * 0.5f) + 0.2f, groundLayer);
+
         HandleCameraNoise();
         AlignPlayerToCamera();
         HandleFOV();
-        HandleDashInput();
         HandleFootsteps();
-    }
 
+        if (dashCooldownTimer > 0f)
+            dashCooldownTimer -= Time.unscaledDeltaTime;
+
+        // THE MASTER SPACEBAR INPUT
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            if (activeAbility == MovementType.Jump)
+            {
+                if (isGrounded)
+                {
+                    rb.velocity = new Vector3(rb.velocity.x, jumpForce, rb.velocity.z);
+                }
+            }
+            else if (activeAbility == MovementType.Dash)
+            {
+                if (dashCooldownTimer <= 0f) StartDash();
+            }
+        }
+    }
     void FixedUpdate()
     {
-        // Separate physics logic
         if (isDashing)
         {
             HandleDash();
@@ -108,18 +170,14 @@ public class PlayerController : MonoBehaviour
 
         Vector3 velocityChange = targetVelocity - new Vector3(currentVelocity.x, 0f, currentVelocity.z);
         rb.AddForce(velocityChange * currentForceMultiplier, ForceMode.Acceleration);
-
-        // EXTRA GRAVITY: Keeps player from floating up when moving fast over small bumps
-        rb.AddForce(Vector3.down * (40f / currentTimeScale), ForceMode.Acceleration);
-    }
-    void HandleDashInput()
-    {
-        if (dashCooldownTimer > 0f)
-            dashCooldownTimer -= Time.unscaledDeltaTime;
-
-        if (Input.GetKeyDown(KeyCode.Space) && dashCooldownTimer <= 0f)
+    
+        if (isGrounded)
         {
-            StartDash();
+            rb.AddForce(Vector3.down * 20f, ForceMode.Acceleration);
+        }
+        else if (rb.velocity.y < 0.1f)
+        {
+            rb.AddForce(Vector3.down * 35f, ForceMode.Acceleration);
         }
     }
 
