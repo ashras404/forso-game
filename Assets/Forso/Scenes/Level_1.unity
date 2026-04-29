@@ -36491,6 +36491,11 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 1117244617622398417, guid: 83dd32132e20f4d4fabb5d2447ab9fe8, type: 3}
+--- !u!20 &1401610880 stripped
+Camera:
+  m_CorrespondingSourceObject: {fileID: 8594264821101418895, guid: 34440eabb058320478f08689bf85c5a4, type: 3}
+  m_PrefabInstance: {fileID: 4384062115022601672}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1404942296
 GameObject:
   m_ObjectHideFlags: 0
@@ -46814,7 +46819,7 @@ MeshRenderer:
   m_IgnoreNormalsForChartDetection: 0
   m_ImportantGI: 0
   m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
+  m_SelectedEditorRenderState: 2
   m_MinimumChartSize: 4
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
@@ -55502,7 +55507,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1248700161241496817, guid: 34440eabb058320478f08689bf85c5a4, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 35.71
+      value: 25.5
       objectReference: {fileID: 0}
     - target: {fileID: 1248700161241496817, guid: 34440eabb058320478f08689bf85c5a4, type: 3}
       propertyPath: m_LocalPosition.y
@@ -55510,7 +55515,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1248700161241496817, guid: 34440eabb058320478f08689bf85c5a4, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -17.92
+      value: -43.2
       objectReference: {fileID: 0}
     - target: {fileID: 1248700161241496817, guid: 34440eabb058320478f08689bf85c5a4, type: 3}
       propertyPath: m_LocalRotation.w
@@ -55586,11 +55591,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3885456472457221982, guid: 34440eabb058320478f08689bf85c5a4, type: 3}
       propertyPath: m_Lens.FieldOfView
-      value: 72.74368
+      value: 72.81088
       objectReference: {fileID: 0}
     - target: {fileID: 4946721424634631589, guid: 34440eabb058320478f08689bf85c5a4, type: 3}
       propertyPath: m_AmplitudeGain
-      value: 0.1892532
+      value: 0.0116486
       objectReference: {fileID: 0}
     - target: {fileID: 5237197271183882474, guid: 34440eabb058320478f08689bf85c5a4, type: 3}
       propertyPath: m_Name
@@ -55616,9 +55621,21 @@ PrefabInstance:
       propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8515217625198817129, guid: 34440eabb058320478f08689bf85c5a4, type: 3}
+      propertyPath: maxAmmo
+      value: 15
+      objectReference: {fileID: 0}
+    - target: {fileID: 8515217625198817129, guid: 34440eabb058320478f08689bf85c5a4, type: 3}
+      propertyPath: fireRate
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 8515217625198817129, guid: 34440eabb058320478f08689bf85c5a4, type: 3}
+      propertyPath: fpsCamera
+      value: 
+      objectReference: {fileID: 1401610880}
     - target: {fileID: 8594264821101418895, guid: 34440eabb058320478f08689bf85c5a4, type: 3}
       propertyPath: field of view
-      value: 72.74368
+      value: 72.81088
       objectReference: {fileID: 0}
     - target: {fileID: 9187662300859832631, guid: 34440eabb058320478f08689bf85c5a4, type: 3}
       propertyPath: m_IsActive

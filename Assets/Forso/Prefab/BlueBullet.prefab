@@ -147,5 +147,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   damage: 20
-  crawlSpeed: 2
+  crawlSpeed: 5
   lifetime: 3

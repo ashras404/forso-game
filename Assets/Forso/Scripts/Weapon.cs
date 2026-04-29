@@ -1,127 +1,132 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using Cinemachine;
 
 public class Weapon : MonoBehaviour
 {
-    [Header("Shooting Settings")]
+    #region References
+    [Header("Core References")]
+    public Camera fpsCamera; 
+    public Transform firePoint; 
     public GameObject bulletPrefab;
-    public Transform firePoint;
-    public float bulletForce = 50f;
-    public float fireRate = 0.15f;
+    #endregion
+
+    #region Stats
+    [Header("Weapon Stats")]
+    public float damage = 20f;
+    public float fireRate = 10f;
+    public float maxRange = 100f; 
 
     [Header("Ammo Settings")]
     public int maxAmmo = 30;
     public float reloadTime = 1.5f;
-
-    [Header("Polish (Audio & Visuals)")]
-    public ParticleSystem muzzleFlash;
-    public Light muzzleLight;
-    public AudioClip shootSound;
-    public AudioClip reloadSound;
-
     private int currentAmmo;
-    private float nextTimeToFire = 0f;
     private bool isReloading = false;
 
-    private CinemachineImpulseSource impulseSource;
-    private WeaponSway weaponSway;
-    private Camera mainCam; // Added to find the true screen center!
+    private float nextTimeToFire = 0f;
+    #endregion
 
-    void Start()
+    #region Audio & Visuals
+    [Header("Feedback")]
+    public AudioClip shootSound;
+    public AudioClip reloadSound; // Added for the reload sequence
+    public ParticleSystem muzzleFlash;
+    #endregion
+
+    private void Start()
     {
+        // Start the level with a full magazine
         currentAmmo = maxAmmo;
-        impulseSource = GetComponent<CinemachineImpulseSource>();
-        weaponSway = GetComponent<WeaponSway>();
-        mainCam = Camera.main; // Grab the player's main camera
     }
 
-    void Update()
+    private void OnEnable()
     {
+        // Safety check: if you switch weapons while reloading, reset the flag
+        isReloading = false;
+    }
+
+    private void Update()
+    {
+        if (UIManager.GameIsPaused) return;
+
+        // 1. Prevent all actions if currently reloading
         if (isReloading) return;
 
-        if (currentAmmo <= 0 || Input.GetKeyDown(KeyCode.R))
+        // 2. Manual Reload Check (Pressing R)
+        if (Input.GetKeyDown(KeyCode.R) && currentAmmo < maxAmmo)
         {
-            if (currentAmmo < maxAmmo)
-            {
-                StartCoroutine(Reload());
-                return;
-            }
+            StartCoroutine(Reload());
+            return;
         }
-        if (Input.GetMouseButton(0) && Time.time >= nextTimeToFire && !UIManager.GameIsPaused)
+
+        // 3. Shooting Logic
+        if (Input.GetMouseButton(0) && Time.time >= nextTimeToFire)
         {
-            nextTimeToFire = Time.time + fireRate;
-            Shoot();
+            nextTimeToFire = Time.time + 1f / fireRate;
+            
+            if (currentAmmo > 0)
+            {
+                Shoot();
+            }
+            else
+            {
+                // Auto-reload if the player tries to fire an empty gun
+                StartCoroutine(Reload());
+            }
         }
     }
 
-    void Shoot()
+    private IEnumerator Reload()
     {
-        currentAmmo--;
+        isReloading = true;
+        Debug.Log("Reloading...");
 
-        // 1. Visuals & Audio
-        if (muzzleFlash != null) muzzleFlash.Play();
-        if (muzzleLight != null) StartCoroutine(FlashLightRoutine());
-
-        if (shootSound != null && AudioManager.Instance != null)
+        if (AudioManager.Instance != null && reloadSound != null)
         {
-            float originalPitch = AudioManager.Instance.sfxSource.pitch;
-            AudioManager.Instance.sfxSource.pitch = Random.Range(0.9f, 1.1f);
-            AudioManager.Instance.PlaySFX(shootSound, 0.8f);
-            AudioManager.Instance.sfxSource.pitch = originalPitch;
+            AudioManager.Instance.PlaySFX(reloadSound, 1f);
         }
 
-        // --- THE FIX: TRUE AIM MATH ---
+        // Wait for the duration of the reload (works with Za Warudo/TimeScale!)
+        yield return new WaitForSeconds(reloadTime);
 
-        // Find the exact center of the screen
-        Ray ray = mainCam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+        currentAmmo = maxAmmo;
+        isReloading = false;
+    }
+
+    private void Shoot()
+    {
+        currentAmmo--; // Subtract one bullet per shot
+        
+        if (muzzleFlash != null) muzzleFlash.Play();
+        if (AudioManager.Instance != null && shootSound != null)
+        {
+            AudioManager.Instance.PlaySFXRandomPitch(shootSound, 1f, 0.9f, 1.1f);
+        }
+
+        Ray ray = fpsCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
         RaycastHit hit;
         Vector3 targetPoint;
 
-        // If the invisible laser hits something, that's our target.
-        // If it hits the sky/nothing, pick a point super far away.
-        if (Physics.Raycast(ray, out hit))
+        if (Physics.Raycast(ray, out hit, maxRange))
         {
             targetPoint = hit.point;
         }
         else
         {
-            targetPoint = ray.GetPoint(100);
+            targetPoint = ray.GetPoint(100f); 
         }
 
-        // Calculate the exact direction from the gun barrel to the target point
-        Vector3 trueDirection = (targetPoint - firePoint.position).normalized;
+        Vector3 directionToTarget = targetPoint - firePoint.position;
 
-        GameObject bullet = Instantiate(bulletPrefab, firePoint.position, Quaternion.LookRotation(trueDirection));
-        Bullet bulletScript = bullet.GetComponent<Bullet>();
-        if (bulletScript != null)
+        if (bulletPrefab != null)
         {
-            bulletScript.Setup(trueDirection, bulletForce);
+            GameObject currentBullet = Instantiate(bulletPrefab, firePoint.position, Quaternion.identity);
+            currentBullet.transform.forward = directionToTarget.normalized;
+
+            Bullet bulletScript = currentBullet.GetComponent<Bullet>();
+            if (bulletScript != null)
+            {
+                bulletScript.Setup(directionToTarget.normalized, 50f);
+            }
         }
-        
-        if (impulseSource != null) impulseSource.GenerateImpulse();
-        if (weaponSway != null) weaponSway.TriggerRecoil();
-    }
-
-    IEnumerator Reload()
-    {
-        isReloading = true;
-
-        if (reloadSound != null && AudioManager.Instance != null)
-        {
-            AudioManager.Instance.PlaySFX(reloadSound, 1f);
-        }
-
-        yield return new WaitForSecondsRealtime(reloadTime);
-        currentAmmo = maxAmmo;
-        isReloading = false;
-    }
-
-    IEnumerator FlashLightRoutine()
-    {
-        muzzleLight.enabled = true;
-        yield return new WaitForSeconds(0.05f);
-        muzzleLight.enabled = false;
     }
 }
